@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","JavaRuntimeURLConnection",["~#set",[["^ ","~:flags",["^2",["~:method"]]]]],"connect",["^2",[["^ ","^3",["^2",["^4","~:public"]]]]],"getInputStream",["^2",[["^ ","^3",["^2",["^4","^6"]]]]],"getContentLengthLong",["^2",[["^ ","^3",["^2",["^4","^6"]]]]],"getContentLength",["^2",[["^ ","^3",["^2",["^4","^6"]]]]]]]
