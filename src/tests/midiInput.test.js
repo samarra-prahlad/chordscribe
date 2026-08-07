@@ -18,4 +18,4 @@ describe ('useMidiInput note capture', () => {
             expect(result.current.note).toContainEqual({ note: 60, velocity: 100 });
         });
     });
-})
+});
