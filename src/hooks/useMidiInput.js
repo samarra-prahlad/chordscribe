@@ -10,6 +10,12 @@ function useMidiInput() {
             const inputs = [...midiAccess.inputs.values()];
             if (inputs.length > 0) {
                 setMidiStatus(`Connected: ${inputs[0].name}`);
+                inputs[0].onmidimessage = (message) => {
+                    const [status, note, velocity] = message.data;
+                    if (status == 144 && velocity > 0) {
+                        setNotes((prevNotes) => [...prevNotes, {note, velocity}]);
+                    }
+                }
             } else {
                 setMidiStatus(`No MIDI device found`);
             }

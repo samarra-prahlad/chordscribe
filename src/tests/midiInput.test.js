@@ -6,7 +6,7 @@ describe ('useMidiInput note capture', () => {
     it ('adds a note to the ntoes list when a note-on message is received', async () => {
         const testInput = { name : 'Test keyboard1', onmidimessage: null };
         global.navigator.requestMIDIAccess = vi.fn().mockResolvedValue({
-            inputs: new Map ([['id1', { name: 'IAC Driver Bus 1'}]]),
+            inputs: new Map ([['id1', testInput]]),
         });
         const { result } = renderHook(() => useMidiInput());
 
@@ -15,7 +15,7 @@ describe ('useMidiInput note capture', () => {
         });
         testInput.onmidimessage({data: [144, 60, 100]});
         await waitFor(() => {
-            expect(result.current.note).toContainEqual({ note: 60, velocity: 100 });
+            expect(result.current.notes).toContainEqual({ note: 60, velocity: 100 });
         });
     });
 });
