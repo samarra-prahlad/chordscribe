@@ -2,8 +2,13 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import useMidiInput from '../hooks/useMidiInput';
 
+interface FakeMidiInput {
+  name: string;
+  onmidimessage: ((event: { data: number[] }) => void) | null;
+}
+
 function mockMidiDevice(name = 'Test keyboard1') {
-  const testInput = { name, onmidimessage: null };
+  const testInput: FakeMidiInput = { name, onmidimessage: null };
   globalThis.navigator.requestMIDIAccess = vi.fn().mockResolvedValue({
     inputs: new Map([['id1', testInput]]),
   });
@@ -14,12 +19,12 @@ async function renderWithDevice() {
   const testInput = mockMidiDevice();
   const hook = renderHook(() => useMidiInput());
   await waitFor(() => expect(testInput.onmidimessage).not.toBeNull());
-  const send = (data) => act(() => testInput.onmidimessage({ data }));
+  const send = (data: number[]) => act(() => testInput.onmidimessage!({ data }));
   return { testInput, send, ...hook };
 }
 
 afterEach(() => {
-  delete globalThis.navigator.requestMIDIAccess;
+  delete (globalThis.navigator as Partial<Navigator>).requestMIDIAccess;
 });
 
 describe('useMidiInput note capture', () => {
@@ -56,13 +61,13 @@ describe('useMidiInput note capture', () => {
 
 describe('useMidiInput without a device', () => {
   it('reports unsupported when the browser has no Web MIDI API', () => {
-    delete globalThis.navigator.requestMIDIAccess;
+    delete (globalThis.navigator as Partial<Navigator>).requestMIDIAccess;
     const { result } = renderHook(() => useMidiInput());
     expect(result.current.midiStatus).toBe('MIDI access denied or unsupported');
   });
 
   it('still accepts notes from other sources (e.g. the computer keyboard)', () => {
-    delete globalThis.navigator.requestMIDIAccess;
+    delete (globalThis.navigator as Partial<Navigator>).requestMIDIAccess;
     const { result } = renderHook(() => useMidiInput());
     act(() => result.current.noteOn(60));
     expect(result.current.activeNotes).toEqual([60]);

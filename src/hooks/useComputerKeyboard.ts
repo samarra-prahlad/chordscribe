@@ -1,18 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { keyToMidiNote, clampOctave, DEFAULT_OCTAVE } from '../midi/keyboardMap';
 
-function isTypingTarget(target) {
-  if (!target) return false;
+interface UseComputerKeyboardOptions {
+  onNoteOn: (note: number, velocity: number) => void;
+  onNoteOff: (note: number) => void;
+  enabled?: boolean;
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
   const tag = target.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 }
 
 // Plays notes from the computer keyboard so ChordScribe works without a MIDI device.
-function useComputerKeyboard({ onNoteOn, onNoteOff, enabled = true }) {
+function useComputerKeyboard({ onNoteOn, onNoteOff, enabled = true }: UseComputerKeyboardOptions) {
   const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   // key -> note it started, so releasing a key after an octave change stops the right note
-  const heldKeys = useRef(new Map());
+  const heldKeys = useRef(new Map<string, number>());
 
   useEffect(() => {
     octaveRef.current = octave;
@@ -22,7 +28,7 @@ function useComputerKeyboard({ onNoteOn, onNoteOff, enabled = true }) {
     if (!enabled) return undefined;
     const held = heldKeys.current;
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey || isTypingTarget(e.target)) return;
       const key = e.key.toLowerCase();
 
@@ -37,10 +43,11 @@ function useComputerKeyboard({ onNoteOn, onNoteOff, enabled = true }) {
       onNoteOn(note, 100);
     };
 
-    const handleKeyUp = (e) => {
+    const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (!held.has(key)) return;
-      onNoteOff(held.get(key));
+      const note = held.get(key);
+      if (note === undefined) return;
+      onNoteOff(note);
       held.delete(key);
     };
 

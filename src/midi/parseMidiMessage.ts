@@ -7,7 +7,11 @@
 const NOTE_OFF = 0x80;
 const NOTE_ON = 0x90;
 
-export function parseMidiMessage(data) {
+export type MidiEvent =
+  | { type: 'noteOn'; note: number; velocity: number; channel: number }
+  | { type: 'noteOff'; note: number; velocity: number; channel: number };
+
+export function parseMidiMessage(data: Uint8Array | number[] | null | undefined): MidiEvent | null {
   if (!data || data.length < 3) return null;
 
   const [status, note, velocity] = data;
