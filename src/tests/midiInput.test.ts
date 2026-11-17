@@ -4,15 +4,25 @@ import useMidiInput from '../hooks/useMidiInput';
 
 interface FakeMidiInput {
   name: string;
+  state: 'connected' | 'disconnected';
   onmidimessage: ((event: { data: number[] }) => void) | null;
 }
 
+interface FakeMidiAccess  {
+  inputs: Map<string, FakeMidiInput>
+  onstatechange: (() => void ) | null;
+}
+
 function mockMidiDevice(name = 'Test keyboard1') {
-  const testInput: FakeMidiInput = { name, onmidimessage: null };
-  globalThis.navigator.requestMIDIAccess = vi.fn().mockResolvedValue({
-    inputs: new Map([['id1', testInput]]),
-  });
+  const testInput: FakeMidiInput = { name, onmidimessage: null, state: 'connected' };
+  mockMidiAccess().inputs.set('id1', testInput);
   return testInput;
+}
+
+function mockMidiAccess() {
+  const fakeAccess: FakeMidiAccess = {inputs: new Map(), onstatechange: null};
+  globalThis.navigator.requestMIDIAccess = vi.fn().mockResolvedValue(fakeAccess);
+  return fakeAccess;
 }
 
 async function renderWithDevice() {
@@ -74,4 +84,23 @@ describe('useMidiInput without a device', () => {
     act(() => result.current.noteOff(60));
     expect(result.current.activeNotes).toEqual([]);
   });
+});
+
+describe ('useMidiInput hot-plugging', () => {
+  it ('checks if the keyboard is plugged in later', async () => {
+    const testAccess = mockMidiAccess();
+    const{ result }= renderHook (() => useMidiInput());
+    await waitFor(() => expect (result.current.midiStatus).toBe ('No MIDI device found'));
+    const testInput: FakeMidiInput = { name: 'Late keyboard', state: 'connected', onmidimessage: null};
+    testAccess.inputs.set('id1', testInput);
+    act(() => testAccess.onstatechange!());
+    expect(result.current.midiStatus).toContain('Connected');
+
+
+  });
+  it ('checks if the keyboard has been unplugged', async () => {
+    const { result, unmount } = await renderWithDevice();
+    unmount();
+    
+  })
 });
