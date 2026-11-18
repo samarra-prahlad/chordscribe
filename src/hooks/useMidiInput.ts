@@ -45,19 +45,23 @@ function useMidiInput() {
       else noteOff(event.note);
     };
 
+    function connectMidi(midiAccess: MIDIAccess) {
+      inputs = [...midiAccess.inputs.values()];
+      if (inputs.length > 0) {
+        setMidiStatus(`Connected: ${inputs.map((i) => i.name).join(', ')}`);
+        inputs.forEach((input) => {
+          input.onmidimessage = handleMessage;
+        });
+      } else {
+        setMidiStatus('No MIDI device found');
+      }
+    }
     navigator
       .requestMIDIAccess()
       .then((midiAccess) => {
         if (cancelled) return;
-        inputs = [...midiAccess.inputs.values()];
-        if (inputs.length > 0) {
-          setMidiStatus(`Connected: ${inputs.map((i) => i.name).join(', ')}`);
-          inputs.forEach((input) => {
-            input.onmidimessage = handleMessage;
-          });
-        } else {
-          setMidiStatus('No MIDI device found');
-        }
+        connectMidi(midiAccess);
+
       })
       .catch(() => {
         if (!cancelled) setMidiStatus(UNSUPPORTED);
