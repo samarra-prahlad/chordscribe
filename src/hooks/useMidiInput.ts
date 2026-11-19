@@ -61,7 +61,7 @@ function useMidiInput() {
       .then((midiAccess) => {
         if (cancelled) return;
         connectMidi(midiAccess);
-
+        midiAccess.onstatechange = () => connectMidi(midiAccess);
       })
       .catch(() => {
         if (!cancelled) setMidiStatus(UNSUPPORTED);
